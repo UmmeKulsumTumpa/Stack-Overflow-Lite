@@ -1,3 +1,4 @@
+// post.controller.js
 const Post = require('../models/post.model');
 
 exports.getPosts = async (req, res) => {
@@ -12,15 +13,26 @@ exports.getPosts = async (req, res) => {
 
 exports.createPost = async (req, res) => {
     try {
-        const { content, user_id } = req.body;
-        console.log(`Content: ${content}`);
-        console.log(`User ID: ${user_id}`);
+        const { content } = req.body;
+        const userId = req.user.id; // Change from _id to id
 
-        const post = new Post({ author_id: user_id, content });
-        await post.save();
+        if (!content) {
+            return res.status(400).json({ message: 'Content is required.' });
+        }
 
-        res.status(201).json({ success: true, post: post });
-    } catch (err) {
-        res.status(500).json({ error: 'Server error' });
+        const newPost = new Post({
+            content: content,
+            author_id: userId,
+        });
+
+        console.log(newPost);
+
+        await newPost.save();
+        console.log('Post created successfully.');
+
+        res.status(201).json({ success: true, message: 'Post created successfully.', post: newPost });
+    } catch (error) {
+        console.error('Error creating post:', error);
+        res.status(500).json({ message: 'Server error.' });
     }
 };

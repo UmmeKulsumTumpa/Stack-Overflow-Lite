@@ -1,21 +1,36 @@
+// controllers/notification.controller.js
 const Notification = require('../models/notification.model');
 
-exports.getNotifications = async (req, res) => {
+exports.getUserNotifications = async (req, res) => {
     try {
-        const notifications = await Notification.find({ user_id: req.user._id });
-        res.status(200).json({success: true, notifications: notifications});
-    } catch (err) {
-        res.status(500).json({ error: 'Server error' });
+        const userId = req.user.id;
+        const notifications = await Notification.find({ recipient: userId })
+            .populate('postId')
+            .sort({ createdAt: -1 });
+
+        res.status(200).json({ success: true, notifications });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error.' });
     }
 };
 
-exports.createNotification = async (req, res) => {
+exports.markNotificationAsSeen = async (req, res) => {
     try {
-        const { post_id } = req.body;
-        const notification = new Notification({ post_id, user_id: req.user._id });
-        await notification.save();
-        res.status(201).json({success:true, notification: notification});
-    } catch (err) {
-        res.status(500).json({ error: 'Server error' });
+        const { notificationId } = req.params;
+        const userId = req.user.id;
+
+        const notification = await Notification.findOneAndUpdate(
+            { _id: notificationId, recipient: userId },
+            { isSeen: true },
+            { new: true }
+        );
+
+        if (!notification) {
+            return res.status(404).json({ message: 'Notification not found.' });
+        }
+
+        res.status(200).json({ success: true, notification });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error.' });
     }
 };

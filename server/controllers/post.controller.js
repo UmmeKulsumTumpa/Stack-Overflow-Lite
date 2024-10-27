@@ -1,4 +1,6 @@
 const Post = require('../models/post.model');
+const Notification = require('../models/notification.model');
+const User = require('../models/user.model');
 const minioClient = require('../utils/minioConfig');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
@@ -94,7 +96,17 @@ exports.createPost = async (req, res) => {
         console.log('New Post:', newPost);
 
         await newPost.save();
-        console.log('Post created successfully.');
+        // console.log('Post created successfully.');
+        const users = await User.find({ _id: { $ne: userId } });
+        const notifications = users.map(user => ({
+            recipient: user._id,
+            postId: newPost._id,
+            message: `A new post named: "${newPost.title}"`,
+            isSeen: false,
+        }));
+
+        await Notification.insertMany(notifications);
+
 
         res.status(201).json({ success: true, message: 'Post created successfully.', post: newPost });
     } catch (error) {

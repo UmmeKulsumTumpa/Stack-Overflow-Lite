@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import '../styles/SignUp.css';
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
+  const navigate = useNavigate();
 
   const handleSignUp = async () => {
     try {
@@ -18,8 +20,7 @@ const SignUp = () => {
 
       const data = await response.json();
       if (response.ok) {
-        alert('Sign Up Successful!');
-        // Redirect user to login or home page
+        navigate('/signin');
       } else {
         setError(data.message);
       }

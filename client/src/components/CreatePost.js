@@ -67,6 +67,9 @@ const CreatePost = () => {
                 setFile(null);
                 setCodeSnippet('');
                 setError(null);
+                setTimeout(() => {
+                    navigate('/profile');
+                }, 1000);
             } else {
                 setError(data.message || 'Failed to create post.');
                 if (response.status === 401) {

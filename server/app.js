@@ -24,7 +24,8 @@ app.use((req, res, next) => {
 // All routes
 app.use('/', routes);
 
-cron.schedule('0 0 * * *', deleteOldNotifications);
+cron.schedule('*/5 * * * *', deleteOldNotifications);
+
 
 // Start the server
 app.listen(PORT, () => {

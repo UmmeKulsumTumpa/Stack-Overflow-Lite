@@ -1,75 +1,59 @@
+// Home.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
-import '../styles/Home.css';
+import PostDetails from './PostDetails';
 
 const Home = () => {
-	const { isAuthenticated, logout } = React.useContext(AuthContext);
-	const [posts, setPosts] = useState([]);
-	const [error, setError] = useState(null);
+    const { isAuthenticated, user } = React.useContext(AuthContext);
+    const [posts, setPosts] = useState([]);
+    const [error, setError] = useState(null);
 
-	useEffect(() => {
-		const fetchPosts = async () => {
-			try {
-				const response = await fetch('http://localhost:8000/posts/getPost', {
-					method: 'GET',
-					headers: {
-						'Content-Type': 'application/json',
-					},
-				});
+    useEffect(() => {
+        const fetchPosts = async () => {
+            try {
+                const url = isAuthenticated
+                    ? `http://localhost:8000/posts/getPost?userId=${user._id}`
+                    : 'http://localhost:8000/posts/getPost';
 
-				const data = await response.json();
-				if (response.ok) {
-					setPosts(
-						[...data.posts].sort(
-						  (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-						)
-					  );
-				} else {
-					setError(data.message);
-				}
-			} catch (error) {
-				setError('Failed to fetch posts.');
-			}
-		};
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
 
-		fetchPosts();
-	}, []);
+                const data = await response.json();
+                if (response.ok) {
+                    setPosts(
+                        [...data.posts].sort(
+                            (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+                        )
+                    );
+                } else {
+                    setError(data.message);
+                }
+            } catch (error) {
+                setError('Failed to fetch posts.');
+            }
+        };
 
-	return (
-		<div className="home-container">
-			<div className="home-header">
-				<div className="nav-right">
-					{isAuthenticated ? (
-						<>
-							<Link to="/profile" className="nav-link">Profile</Link>
-							<button className="nav-link" onClick={logout}>
-								Logout
-							</button>
-						</>
-					) : (
-						<>
-							<Link to="/signup" className="nav-link">Register</Link>
-							<Link to="/signin" className="nav-link">Sign In</Link>
-						</>
-					)}
-				</div>
-			</div>
+        fetchPosts();
+    }, [isAuthenticated, user]);
 
-			<h2>Recent Posts</h2>
-			{error && <p>{error}</p>}
-			{posts.length > 0 ? (
-				posts.map((post) => (
-					<div key={post._id} className="post">
-						<h3>{post.content}</h3>
-						<p>Created at: {new Date(post.createdAt).toLocaleString()}</p>
-					</div>
-				))
-			) : (
-				<p>No posts available</p>
-			)}
-		</div>
-	);
+    return (
+        <div className="max-w-5xl mx-auto py-10 px-4">
+            <h2 className="text-3xl font-bold mb-8 text-center">Recent Posts</h2>
+            {error && <p className="text-red-500">{error}</p>}
+            {posts.length > 0 ? (
+                posts.map((post) => (
+                    <PostDetails key={post._id} post={post} />
+                ))
+            ) : (
+                <p className="text-gray-600 text-center">No posts available</p>
+            )}
+        </div>
+    );
 };
 
 export default Home;

@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const postSchema = new mongoose.Schema({
+    title: {
+        type: String,
+        default: 'Unknown',
+    },
     content: {
         type: String,
         required: true,
@@ -14,6 +18,12 @@ const postSchema = new mongoose.Schema({
     },
     file_name: {
         type: String, 
+    },
+    file_type: {
+        type: String,
+    },
+    code_snippet_url: {
+        type: String,
     },
 }, {timestamps: true});
 

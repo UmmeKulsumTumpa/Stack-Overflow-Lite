@@ -9,6 +9,12 @@ const postSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId, ref: 'User',
         required: true,
     },
+    file_url: {
+        type: String,
+    },
+    file_name: {
+        type: String, 
+    },
 }, {timestamps: true});
 
 const Post = mongoose.model('Post', postSchema);

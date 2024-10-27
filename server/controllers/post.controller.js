@@ -1,5 +1,17 @@
 // post.controller.js
 const Post = require('../models/post.model');
+const minioClient = require('../utils/minioConfig');
+const multer = require('multer');
+const { v4: uuidv4 } = require('uuid');
+const path = require('path');
+
+const storage = multer.memoryStorage();
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 100 * 1024 * 1024 },
+});
+
+exports.uploadMiddleware = upload.single('file');
 
 exports.getPosts = async (req, res) => {
     try {
@@ -14,18 +26,41 @@ exports.getPosts = async (req, res) => {
 exports.createPost = async (req, res) => {
     try {
         const { content } = req.body;
-        const userId = req.user.id; // Change from _id to id
+        const userId = req.user.id;
 
-        if (!content) {
-            return res.status(400).json({ message: 'Content is required.' });
+        if (!content && !req.file) {
+            return res.status(400).json({ message: 'Either content or file is required to create a post.' });
+        }
+
+        let fileUrl = null;
+        let fileName = null;
+
+        if (req.file) {
+            const originalName = sanitize(req.file.originalname);
+            const fileExtension = path.extname(originalName);
+            const uniqueFileName = `${uuidv4()}${fileExtension}`;
+
+            const metaData = {
+                'Content-Type': req.file.mimetype,
+            };
+
+            await minioClient.putObject(process.env.MINIO_BUCKET, uniqueFileName, req.file.buffer, metaData);
+
+            const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
+            const url = `${protocol}://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/${process.env.MINIO_BUCKET}/${uniqueFileName}`;
+
+            fileUrl = url;
+            fileName = originalName;
         }
 
         const newPost = new Post({
-            content: content,
+            content: content || '', 
             author_id: userId,
+            file_url: fileUrl,
+            file_name: fileName,
         });
 
-        console.log(newPost);
+        console.log('New Post:', newPost);
 
         await newPost.save();
         console.log('Post created successfully.');
@@ -33,6 +68,10 @@ exports.createPost = async (req, res) => {
         res.status(201).json({ success: true, message: 'Post created successfully.', post: newPost });
     } catch (error) {
         console.error('Error creating post:', error);
+        if (error instanceof multer.MulterError) {
+            return res.status(400).json({ message: error.message });
+        }
         res.status(500).json({ message: 'Server error.' });
     }
 };
+

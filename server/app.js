@@ -4,9 +4,11 @@ const bodyParser = require('body-parser');
 const routes = require('./routes');
 const db = require('./utils/db');
 const cors = require('cors'); 
+const cron = require('node-cron');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const deleteOldNotifications = require('./jobs/deleteOldNotifications');
 
 app.use(cors());
 
@@ -21,6 +23,8 @@ app.use((req, res, next) => {
 
 // All routes
 app.use('/', routes);
+
+cron.schedule('0 0 * * *', deleteOldNotifications);
 
 // Start the server
 app.listen(PORT, () => {

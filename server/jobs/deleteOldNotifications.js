@@ -1,9 +1,8 @@
-// jobs/deleteOldNotifications.js
 const Notification = require('../models/notification.model');
 
 const deleteOldNotifications = async () => {
     const expiryDate = new Date();
-    expiryDate.setDate(expiryDate.getDate() - 7);
+    expiryDate.setMinutes(expiryDate.getMinutes() - 20);
 
     try {
         await Notification.deleteMany({ createdAt: { $lt: expiryDate } });

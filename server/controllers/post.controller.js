@@ -1,4 +1,3 @@
-// post.controller.js
 const Post = require('../models/post.model');
 const minioClient = require('../utils/minioConfig');
 const multer = require('multer');
@@ -30,22 +29,20 @@ exports.getPosts = async (req, res) => {
     }
 };
 
-
 exports.createPost = async (req, res) => {
     try {
-        let title=null;
-        const { title_, content } = req.body;
+        const { title, content, codeSnippet } = req.body;
         const userId = req.user.id;
 
-        if(title_!==undefined && title_!==null) title=title_;
-
-        if (!content && !req.file) {
-            return res.status(400).json({ message: 'Either content or file is required to create a post.' });
+        if (!content && !req.file && !codeSnippet) {
+            return res.status(400).json({ message: 'Content, file, or code snippet is required to create a post.' });
         }
 
         let fileUrl = null;
         let fileName = null;
+        let codeSnippetUrl = null;
 
+        // Handling file upload if provided
         if (req.file) {
             const originalName = sanitize(req.file.originalname);
             const fileExtension = path.extname(originalName);
@@ -64,11 +61,30 @@ exports.createPost = async (req, res) => {
             fileName = originalName;
         }
 
+        // Handling code snippet if provided
+        if (codeSnippet) {
+            const snippetFileName = `${uuidv4()}.txt`; // Save code snippets as .txt files (or use an appropriate extension)
+
+            // Create a buffer from the code snippet text
+            const buffer = Buffer.from(codeSnippet, 'utf-8');
+            const metaData = {
+                'Content-Type': 'text/plain',
+            };
+
+            // Upload the code snippet buffer to MinIO
+            await minioClient.putObject(process.env.MINIO_BUCKET, snippetFileName, buffer, metaData);
+
+            const protocol = process.env.MINIO_USE_SSL === 'true' ? 'https' : 'http';
+            codeSnippetUrl = `${protocol}://${process.env.MINIO_ENDPOINT}:${process.env.MINIO_PORT}/${process.env.MINIO_BUCKET}/${snippetFileName}`;
+        }
+
         const newPost = new Post({
+            title: title || 'Unknown', // Set the title if provided, otherwise use "Unknown"
             content: content || '', 
             author_id: userId,
             file_url: fileUrl,
             file_name: fileName,
+            code_snippet_url: codeSnippetUrl, // Save the code snippet URL
         });
 
         console.log('New Post:', newPost);
@@ -86,3 +102,20 @@ exports.createPost = async (req, res) => {
     }
 };
 
+exports.getUserPosts = async (req, res) => {
+    try {
+        const { userId } = req.params;
+
+        // Fetch all posts for the specified user
+        const userPosts = await Post.find({ author_id: userId });
+
+        if (!userPosts.length) {
+            return res.status(404).json({ success: false, message: 'No posts found for this user.' });
+        }
+        
+        res.status(200).json({ success: true, posts: userPosts });
+    } catch (err) {
+        console.error('Error fetching user posts:', err);
+        res.status(500).json({ error: 'Server error' });
+    }
+};

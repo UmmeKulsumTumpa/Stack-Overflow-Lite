@@ -1,6 +1,8 @@
+// Home.js
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
+import PostDetails from './PostDetails';
 
 const Home = () => {
     const { isAuthenticated, user } = React.useContext(AuthContext);
@@ -10,7 +12,6 @@ const Home = () => {
     useEffect(() => {
         const fetchPosts = async () => {
             try {
-                // Fetch posts with user ID if the user is logged in
                 const url = isAuthenticated
                     ? `http://localhost:8000/posts/getPost?userId=${user._id}`
                     : 'http://localhost:8000/posts/getPost';
@@ -46,10 +47,7 @@ const Home = () => {
             {error && <p className="text-red-500">{error}</p>}
             {posts.length > 0 ? (
                 posts.map((post) => (
-                    <div key={post._id} className="bg-white shadow-lg rounded-lg p-6 mb-6">
-                        <h3 className="text-xl font-semibold text-gray-800 mb-2">{post.content}</h3>
-                        <p className="text-sm text-gray-500">Created at: {new Date(post.createdAt).toLocaleString()}</p>
-                    </div>
+                    <PostDetails key={post._id} post={post} />
                 ))
             ) : (
                 <p className="text-gray-600 text-center">No posts available</p>

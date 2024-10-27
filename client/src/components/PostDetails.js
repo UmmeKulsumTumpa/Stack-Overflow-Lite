@@ -1,44 +1,42 @@
-import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import '../styles/PostDetails.css';
+import React, { useState, useEffect } from 'react';
 
-const PostDetail = () => {
-  const { id } = useParams();
-  const [post, setPost] = useState(null);
-  const [error, setError] = useState(null);
+const PostDetails = ({ post }) => {
+    const [fileContent, setFileContent] = useState(null);
 
-  useEffect(() => {
-    const fetchPostDetail = async () => {
-      try {
-        const response = await fetch(`http://localhost:5000/posts/${id}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          },
-        });
+    useEffect(() => {
+        // If there is a code snippet file URL, fetch its content
+        if (post.code_snippet_url) {
+            const fetchFileContent = async () => {
+                try {
+                    const response = await fetch(post.code_snippet_url);
+                    const text = await response.text();
+                    setFileContent(text);
+                } catch (error) {
+                    console.error('Error fetching code snippet:', error);
+                }
+            };
 
-        const data = await response.json();
-        if (response.ok) {
-          setPost(data);
-        } else {
-          setError(data.message);
+            fetchFileContent();
         }
-      } catch (error) {
-        setError('Failed to fetch post details.');
-      }
-    };
+    }, [post.code_snippet_url]);
 
-    fetchPostDetail();
-  }, [id]);
-
-  if (!post) return <div>Loading...</div>;
-
-  return (
-    <div className="post-detail-container">
-      <h2>{post.title}</h2>
-      <p>{post.content}</p>
-    </div>
-  );
+    return (
+        <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
+            <h4 className="text-xl font-semibold text-gray-800 mb-2">{post.title || "Untitled Post"}</h4>
+            <p className="text-sm text-gray-500 mb-4">Created at: {new Date(post.createdAt).toLocaleString()}</p>
+            {post.content && (
+                <p className="text-gray-600 mb-4">{post.content}</p>
+            )}
+            {fileContent && (
+                <div className="bg-gray-100 p-4 rounded mb-4">
+                    <h5 className="text-lg font-semibold mb-2">Code Snippet:</h5>
+                    <pre className="bg-gray-200 p-4 rounded overflow-auto text-sm">
+                        <code>{fileContent}</code>
+                    </pre>
+                </div>
+            )}
+        </div>
+    );
 };
 
-export default PostDetail;
+export default PostDetails;

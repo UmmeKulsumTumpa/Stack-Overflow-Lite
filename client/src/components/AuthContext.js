@@ -17,6 +17,8 @@ export const AuthProvider = ({ children }) => {
         if (storedToken) {
             try {
                 const decoded = jwtDecode(storedToken);
+                console.log("decoded: ",decoded);
+                
                 setToken(storedToken);
                 setIsAuthenticated(true);
                 setUser({ _id: decoded.id, email: decoded.email }); // Adjust based on token payload

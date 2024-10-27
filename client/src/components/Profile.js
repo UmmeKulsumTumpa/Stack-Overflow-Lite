@@ -1,38 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AuthContext } from './AuthContext';
-import '../styles/Profile.css';
 
 const Profile = () => {
-  const { isAuthenticated } = useContext(AuthContext);
-  const [email, setEmail] = useState('');
+  const { isAuthenticated, user } = useContext(AuthContext); // Destructure user directly from AuthContext
   const [posts, setPosts] = useState([]);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Fetch user details (e.g., email)
-    const token = localStorage.getItem('token');
-    const fetchUserProfile = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/auth/profile', {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
-        });
-
-        const data = await response.json();
-        if (response.ok) {
-          setEmail(data.email);
-        } else {
-          setError(data.message);
-        }
-      } catch (error) {
-        setError('Failed to fetch user details.');
-      }
-    };
-
     // Fetch the user's own posts
+    const token = localStorage.getItem('token');
     const fetchUserPosts = async () => {
       try {
         const response = await fetch('http://localhost:8000/posts/userPosts', {
@@ -54,27 +31,35 @@ const Profile = () => {
       }
     };
 
-    fetchUserProfile();
     fetchUserPosts();
   }, []);
 
   return (
-    <div className="profile-container">
-      <h2>Profile</h2>
-      {error && <p>{error}</p>}
-      <p>Email: {email}</p>
-      
-      <button className="create-post-button">
-        <Link to="/create-post">Create Post</Link>
-      </button>
+    <div className="max-w-4xl mx-auto py-10 px-6 bg-gray-100 rounded-lg shadow-lg">
+      <h2 className="text-4xl font-bold text-gray-800 mb-6 text-center">Profile</h2>
+      {error && <p className="text-red-500 mb-4">{error}</p>}
+      <div className="bg-white p-6 rounded-lg shadow-md mb-8">
+        <h3 className="text-2xl font-semibold text-gray-700 mb-2">User Details</h3>
+        <p className="text-lg text-gray-600 mb-4">Email: {user?.email || 'No email available'}</p>
+        <button className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition duration-300">
+          <Link to="/create-post">Create Post</Link>
+        </button>
+      </div>
 
-      <h3>Your Posts</h3>
-      {posts.map((post) => (
-        <div key={post.id} className="post">
-          <h3>{post.title}</h3>
-          <p>{post.content}</p>
+      <h3 className="text-3xl font-semibold text-gray-800 mb-4">Your Posts</h3>
+      {posts.length > 0 ? (
+        <div className="grid grid-cols-1 gap-6">
+          {posts.map((post) => (
+            <div key={post.id} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition duration-300">
+              <h4 className="text-xl font-semibold text-gray-800 mb-2">{post.title || "Untitled Post"}</h4>
+              <p className="text-gray-600 mb-4">{post.content}</p>
+              <p className="text-sm text-gray-400">Posted on: {new Date(post.createdAt).toLocaleString()}</p>
+            </div>
+          ))}
         </div>
-      ))}
+      ) : (
+        <p className="text-gray-600 text-center">You have no posts yet.</p>
+      )}
     </div>
   );
 };

@@ -15,7 +15,14 @@ exports.uploadMiddleware = upload.single('file');
 
 exports.getPosts = async (req, res) => {
     try {
-        const posts = await Post.find();
+        const { userId } = req.query;
+        let posts;
+        
+        if (userId) {
+            posts = await Post.find({ author_id: { $ne: userId } });
+        } else {
+            posts = await Post.find();
+        }
 
         res.status(200).json({ success: true, posts: posts });
     } catch (err) {
@@ -23,10 +30,14 @@ exports.getPosts = async (req, res) => {
     }
 };
 
+
 exports.createPost = async (req, res) => {
     try {
-        const { content } = req.body;
+        let title=null;
+        const { title_, content } = req.body;
         const userId = req.user.id;
+
+        if(title_!==undefined && title_!==null) title=title_;
 
         if (!content && !req.file) {
             return res.status(400).json({ message: 'Either content or file is required to create a post.' });

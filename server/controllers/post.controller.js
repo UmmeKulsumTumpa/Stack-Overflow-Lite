@@ -3,6 +3,8 @@ const minioClient = require('../utils/minioConfig');
 const multer = require('multer');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
+const mime = require('mime-types');
+const sanitize = require('sanitize-filename');
 
 const storage = multer.memoryStorage();
 const upload = multer({
@@ -40,6 +42,7 @@ exports.createPost = async (req, res) => {
 
         let fileUrl = null;
         let fileName = null;
+        let fileType = null;
         let codeSnippetUrl = null;
 
         // Handling file upload if provided
@@ -47,9 +50,10 @@ exports.createPost = async (req, res) => {
             const originalName = sanitize(req.file.originalname);
             const fileExtension = path.extname(originalName);
             const uniqueFileName = `${uuidv4()}${fileExtension}`;
+            fileType = req.file.mimetype || mime.lookup(fileExtension); // Detect file type
 
             const metaData = {
-                'Content-Type': req.file.mimetype,
+                'Content-Type': fileType,
             };
 
             await minioClient.putObject(process.env.MINIO_BUCKET, uniqueFileName, req.file.buffer, metaData);
@@ -63,7 +67,7 @@ exports.createPost = async (req, res) => {
 
         // Handling code snippet if provided
         if (codeSnippet) {
-            const snippetFileName = `${uuidv4()}.txt`; // Save code snippets as .txt files (or use an appropriate extension)
+            const snippetFileName = `${uuidv4()}.txt`; // Save code snippets as .txt files
 
             // Create a buffer from the code snippet text
             const buffer = Buffer.from(codeSnippet, 'utf-8');

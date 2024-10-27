@@ -4,21 +4,29 @@ const PostDetails = ({ post }) => {
     const [fileContent, setFileContent] = useState(null);
 
     useEffect(() => {
-        // If there is a code snippet file URL, fetch its content
-        if (post.code_snippet_url) {
+        // Fetch file content if a file URL exists
+        if (post.file_url) {
             const fetchFileContent = async () => {
                 try {
-                    const response = await fetch(post.code_snippet_url);
+                    const response = await fetch(post.file_url);
+
+                    // Check if the response is okay
+                    if (!response.ok) {
+                        throw new Error(`Error fetching file: ${response.statusText}`);
+                    }
+
+                    // Read file content as text
                     const text = await response.text();
                     setFileContent(text);
                 } catch (error) {
-                    console.error('Error fetching code snippet:', error);
+                    console.error('Error fetching file content:', error);
+                    setFileContent('Error loading file content.');
                 }
             };
 
             fetchFileContent();
         }
-    }, [post.code_snippet_url]);
+    }, [post.file_url]);
 
     return (
         <div className="bg-white p-6 rounded-lg shadow-lg mb-6">
@@ -29,7 +37,7 @@ const PostDetails = ({ post }) => {
             )}
             {fileContent && (
                 <div className="bg-gray-100 p-4 rounded mb-4">
-                    <h5 className="text-lg font-semibold mb-2">Code Snippet:</h5>
+                    <h5 className="text-lg font-semibold mb-2">File Content:</h5>
                     <pre className="bg-gray-200 p-4 rounded overflow-auto text-sm">
                         <code>{fileContent}</code>
                     </pre>

@@ -19,6 +19,9 @@ const postSchema = new mongoose.Schema({
     file_name: {
         type: String, 
     },
+    file_type: {
+        type: String,
+    },
     code_snippet_url: {
         type: String,
     },

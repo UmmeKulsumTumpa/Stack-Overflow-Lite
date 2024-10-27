@@ -119,7 +119,6 @@ const CreatePost = () => {
                 <label className="block text-gray-700 mb-2 font-semibold">Upload a File:</label>
                 <input
                     type="file"
-                    accept=".txt,.js,.py,.java,.html,.css,.md" // Accepting code and text files
                     onChange={handleFileChange}
                     className="block w-full text-sm text-gray-500
                     file:mr-4 file:py-2 file:px-4
